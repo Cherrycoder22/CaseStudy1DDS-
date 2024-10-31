@@ -1,3 +1,3 @@
 # CaseStudy1DDS-
-EDA DDS Code and Presentation
+EDA DDS Presentation
 https://youtu.be/EHuvOacRp-s
