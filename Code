@@ -1,1 +1,148 @@
-file:///Users/cherokeecarr/Cherokee_Carr_Case_Study_Final.html
+---
+title: "CaseStudyFinal"
+output: html_document
+date: "2024-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown Case Study
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(e1071)  # For Naive Bayes
+library(caret)
+library(dplyr)
+library(class)
+
+# Read the dataset
+DF = read.csv("/Users/cherokeecarr/Desktop/CaseStudy1-data.csv", header = TRUE)
+
+# Check the first few rows of the dataset
+head(DF)
+
+# Create a new data frame with selected columns
+CaseStudydata = data.frame(
+  Gender = DF$Gender,
+  Distance = DF$DistanceFromHome,
+  Rate = DF$HourlyRate,
+  Age = DF$Age,
+  Department = DF$Department,
+  JobSatisfaction = DF$JobSatisfaction,
+  EnvironmentSatisfaction = DF$EnvironmentSatisfaction,
+  TotalWorkingYears = DF$TotalWorkingYears,
+  Martial = DF$MaritalStatus,
+  Overtime = DF$OverTime,
+  Attrition = DF$Attrition,
+  Travel = DF$BusinessTravel,
+  CurrentRole = DF$YearsInCurrentRole,
+  Department = DF$Department,
+  Role = DF$JobRole,
+  WorkLife = DF$WorkLifeBalance,
+  SalaryHike = DF$PercentSalaryHike
+)
+```
+Narrowing the data frame
+```{r}
+unique_departments <- unique(CaseStudydata$Department)
+print(unique_departments)
+
+department_counts <- table(CaseStudydata$Department)
+print(department_counts)
+
+library(dplyr)
+department_summary <- CaseStudydata %>%
+  group_by(Department) %>%
+  summarise(
+    AvgAge = mean(Age, na.rm = TRUE),
+    AvgHourlyRate = mean(Rate, na.rm = TRUE),
+    Count = n()
+  )
+print(department_summary)
+
+library(ggplot2)
+ggplot(CaseStudydata, aes(x = Department, fill = Attrition)) +
+  geom_bar(position = "fill") +
+  labs(title = "Attrition Rate by Department", y = "Proportion")
+
+unique_Roles <- unique(CaseStudydata$Role)
+print(unique_Roles)
+
+Roles_counts <- table(CaseStudydata$Role)
+print(Roles_counts)
+
+
+library(dplyr)
+role_summary <- CaseStudydata %>%
+  group_by(Role) %>%
+  summarise(
+    AvgAge = mean(Age, na.rm = TRUE),
+    AvgHourlyRate = mean(Rate, na.rm = TRUE),
+    Count = n()
+  )
+print(role_summary)
+
+ggplot(CaseStudydata, aes(x = Role, fill = Attrition)) +
+  geom_bar(position = "fill") +
+  labs(title = "Attrition Rate by Role", y = "Proportion")
+
+library(dplyr)
+```
+Here's my filtered data set
+```{r}
+# Filter for specific roles and total working years greater than 5
+filtered_roles <- CaseStudydata %>%
+  filter(Role %in% c("Sales Representative", "Laboratory Techician", "Human Resources"), 
+         TotalWorkingYears > 5)
+
+# View the filtered data
+head(filtered_roles)
+library(dplyr)
+
+# Filter for specific roles
+filtered_data <- CaseStudydata %>%
+  filter(Role %in% c("Sales Representative", "Lab Tech", "HR"))
+```
+Here's my NB and confusion matrix
+```{r}
+library(e1071)
+# Load required libraries
+library(e1071)  # For naiveBayes
+library(caret)
+# Create the Naive Bayes model
+nb_model <- naiveBayes(Attrition ~ TotalWorkingYears + Overtime + WorkLife + Gender + Rate + SalaryHike + Travel + CurrentRole + Distance, 
+                       data = filtered_data)
+
+print(nb_model)
+```
+Predictions
+```{R}
+filtered_data$Attrition <- as.factor(filtered_data$Attrition)
+
+predictions <- predict(nb_model, newdata = filtered_data)
+
+# Ensure predictions are factors with the same levels as filtered_data$Attrition
+predictions <- factor(predictions, levels = levels(filtered_data$Attrition))
+
+confusion_matrix <- confusionMatrix(predictions, filtered_data$Attrition)
+print(confusion_matrix)
+
+# Calculate Accuracy, Sensitivity, and Specificity
+accuracy <- confusion_matrix$overall['Accuracy']
+sensitivity <- confusion_matrix$byClass['Sensitivity']
+specificity <- confusion_matrix$byClass['Specificity']
+
+# Print the results
+cat("Accuracy:", accuracy, "\n")
+cat("Sensitivity:", sensitivity, "\n")
+cat("Specificity:", specificity, "\n")
+
+```
